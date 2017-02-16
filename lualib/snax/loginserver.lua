@@ -100,6 +100,7 @@ local function launch_slave(auth_handler)
 		socket.start(fd)	-- may raise error here
 		local msg, len = ret_pack(pcall(auth, fd, addr))
 		socket.abandon(fd)	-- never raise error here
+		print("auth done",msg)
 		return msg, len
 	end
 
@@ -187,7 +188,7 @@ local function login(conf)
 	local name = "." .. (conf.name or "login")
 	skynet.start(function()
 		local loginmaster = skynet.localname(name)
-		if loginmaster then
+		if loginmaster then			
 			local auth_handler = assert(conf.auth_handler)
 			launch_master = nil
 			conf = nil

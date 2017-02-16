@@ -82,6 +82,13 @@ skynet.register_protocol {
 	id = skynet.PTYPE_CLIENT,
 }
 
+
+
+skynet.register_protocol {
+	name = "text",
+	id = skynet.PTYPE_TEXT,
+}
+
 local user_online = {}
 local handshake = {}
 local connection = {}
@@ -138,6 +145,7 @@ function server.start(conf)
 		local f = assert(CMD[cmd])
 		return f(...)
 	end
+	
 
 	function handler.open(source, gateconf)
 		local servername = assert(gateconf.servername)
@@ -168,7 +176,7 @@ function server.start(conf)
 		local username, index, hmac = string.match(message, "([^:]*):([^:]*):([^:]*)")
 		local u = user_online[username]
 		if u == nil then
-			return "404 User Not Found"
+			return "404 User Not Found:"..username
 		end
 		local idx = assert(tonumber(index))
 		hmac = b64decode(hmac)

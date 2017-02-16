@@ -98,6 +98,7 @@ end
 local coroutine_pool = setmetatable({}, { __mode = "kv" })
 
 local function co_create(f)
+	--print("co_create:",debug.traceback())
 	local co = table.remove(coroutine_pool)
 	if co == nil then
 		co = coroutine.create(function(...)
@@ -384,6 +385,7 @@ local function yield_call(service, session)
 end
 
 function skynet.call(addr, typename, ...)
+	--print("skynet call ",typename,...,debug.traceback())
 	local p = proto[typename]
 	local session = c.send(addr, p.id , nil , p.pack(...))
 	if session == nil then

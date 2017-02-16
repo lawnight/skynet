@@ -2,6 +2,8 @@ local skynet = require "skynet"
 local c = require "skynet.core"
 
 function skynet.launch(...)
+	--print(debug.traceback())
+	--print("launch:",...)
 	local addr = c.command("LAUNCH", table.concat({...}," "))
 	if addr then
 		return tonumber("0x" .. string.sub(addr , 2))

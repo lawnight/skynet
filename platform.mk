@@ -32,6 +32,8 @@ macosx linux : SKYNET_LIBS += -ldl
 linux freebsd : SKYNET_LIBS += -lrt
 
 # Turn off jemalloc and malloc hook on macosx
+linux :	MALLOC_STATICLIB :=
+linux :	SKYNET_DEFINES :=-DNOUSE_JEMALLOC
 
 macosx : MALLOC_STATICLIB :=
 macosx : SKYNET_DEFINES :=-DNOUSE_JEMALLOC
