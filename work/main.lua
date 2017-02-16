@@ -9,14 +9,22 @@ skynet.start(function()
 	--skynet.newservice("debug_console",8000)
 	
 	--like this
-	local loginserver = skynet.newservice("login/login_server")
+	local loginserver = skynet.newservice("server/login_server")
 	local server = skynet.newservice("server/game_server", loginserver)
+
+	-- skynet.call(server, "lua", "open" , {
+	-- 	port = 9000,
+	-- 	maxclient = 64,
+	-- 	servername = "sample",
+	-- })
 
 	skynet.call(server, "lua", "open" , {
 		port = 9000,
-		maxclient = 64,
-		servername = "sample",
+		maxclient = max_client,
+		nodelay = true,
 	})
+
+	
 
 	skynet.exit()
 end)

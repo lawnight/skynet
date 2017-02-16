@@ -8,7 +8,11 @@ if _VERSION ~= "Lua 5.3" then
 end
 
 
+function error_produce()
+	print(a.a)
+end
 
+print(pcall(error_produce))
 
 
 

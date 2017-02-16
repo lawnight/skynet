@@ -1,4 +1,4 @@
-local msgserver = require "snax.msgserver"
+local gateserver = require "snax.gateserver"
 local crypt = require "crypt"
 local skynet = require "skynet"
 
@@ -14,9 +14,11 @@ local internal_id = 0
 function server.logout_handler(uid, subid)
 	local u = users[uid]
 	if u then
-		local username = msgserver.username(uid, subid, servername)
+		
+		local username = server.username(uid, subid, servername)
+
 		assert(u.username == username)
-		msgserver.logout(u.username)
+		gateserver.logout(u.username)
 		users[uid] = nil
 		username_map[u.username] = nil
 		skynet.call(loginservice, "lua", "logout",uid, subid)
@@ -27,7 +29,7 @@ end
 function server.kick_handler(uid, subid)
 	local u = users[uid]
 	if u then
-		local username = msgserver.username(uid, subid, servername)
+		local username = server.username(uid, subid, servername)
 		assert(u.username == username)
 		-- NOTICE: logout may call skynet.exit, so you should use pcall.
 		pcall(skynet.call, u.agent, "lua", "logout")
@@ -54,7 +56,9 @@ function server.login_handler(uid, secret)
 	-- you should return unique subid
 	internal_id = internal_id+1
     local id = internal_id
-    local username = msgserver.username(uid, id, servername)
+    
+	
+	local username = server.username(uid, id, servername)
    
     local agent = skynet.newservice "player"
 	local u = {
@@ -67,16 +71,107 @@ function server.login_handler(uid, secret)
     skynet.call(agent, "lua", "login", uid, id, secret)
 	users[uid] = u
 	username_map[username] = u
-	msgserver.login(username, secret)
+	
+	--gateserver.login(username, secret)
 	return id
 end
 
+function server.username(uid,id,servername)
+	return uid..id
+end
 
--- msgserver call (when gate open),通知login server，有多少gameserver
+-- gateserver call (when gate open),通知login server，有多少gameserver
 function server.register_handler(name)
 	servername = name
 	skynet.call(loginservice, "lua", "register_gate", servername, skynet.self())
 end
 
-msgserver.start(server)
+
+local handler = {}
+
+--listen sucess
+function handler.open(source, conf)
+	--watchdog = conf.watchdog or source
+	local servername = assert(conf.servername)
+	return server.register_handler(servername)
+
+end
+
+function handler.message(fd, msg, sz)
+	-- recv a package, forward it
+	local c = connection[fd]
+	local agent = c.agent
+	if agent then
+		skynet.redirect(agent, c.client, "client", 1, msg, sz)
+	else
+		skynet.send(watchdog, "lua", "socket", "data", fd, netpack.tostring(msg, sz))
+	end
+end
+
+function handler.connect(fd, addr)
+	local c = {
+		fd = fd,
+		ip = addr,
+	}
+	connection[fd] = c
+	skynet.send(watchdog, "lua", "socket", "open", fd, addr)
+end
+
+local function unforward(c)
+	if c.agent then
+		forwarding[c.agent] = nil
+		c.agent = nil
+		c.client = nil
+	end
+end
+
+local function close_fd(fd)
+	local c = connection[fd]
+	if c then
+		unforward(c)
+		connection[fd] = nil
+	end
+end
+
+function handler.disconnect(fd)
+	close_fd(fd)
+	skynet.send(watchdog, "lua", "socket", "close", fd)
+end
+
+function handler.error(fd, msg)
+	close_fd(fd)
+	skynet.send(watchdog, "lua", "socket", "error", fd, msg)
+end
+
+function handler.warning(fd, size)
+	skynet.send(watchdog, "lua", "socket", "warning", fd, size)
+end
+
+local CMD = {}
+
+function CMD.forward(source, fd, client, address)
+	local c = assert(connection[fd])
+	unforward(c)
+	c.client = client or 0
+	c.agent = address or source
+	forwarding[c.agent] = c
+	gateserver.openclient(fd)
+end
+
+function CMD.accept(source, fd)
+	local c = assert(connection[fd])
+	unforward(c)
+	gateserver.openclient(fd)
+end
+
+function CMD.kick(source, fd)
+	gateserver.closeclient(fd)
+end
+
+function handler.command(cmd, source, ...)
+	local f = assert(CMD[cmd])
+	return f(source, ...)
+end
+
+gateserver.start(handler)
 
