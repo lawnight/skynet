@@ -9,6 +9,8 @@ local users = {}
 local username_map = {}
 local internal_id = 0
 
+local connection = {}
+
 
 -- call by agent
 function server.logout_handler(uid, subid)
@@ -50,31 +52,7 @@ function server.request_handler(username, msg)
 	return skynet.tostring(skynet.rawcall(u.agent, "text", msg))
 end
 
--- login server调用
-local internal_id = 0
-function server.login_handler(uid, secret)
-	-- you should return unique subid
-	internal_id = internal_id+1
-    local id = internal_id
-    
-	
-	local username = server.username(uid, id, servername)
-   
-    local agent = skynet.newservice "player"
-	local u = {
-		username = username,
-		agent = agent,
-		uid = uid,
-		subid = id,
-	}
 
-    skynet.call(agent, "lua", "login", uid, id, secret)
-	users[uid] = u
-	username_map[username] = u
-	
-	--gateserver.login(username, secret)
-	return id
-end
 
 function server.username(uid,id,servername)
 	return uid..id
@@ -89,13 +67,8 @@ end
 
 local handler = {}
 
---listen sucess
-function handler.open(source, conf)
-	--watchdog = conf.watchdog or source
-	local servername = assert(conf.servername)
-	return server.register_handler(servername)
 
-end
+
 
 function handler.message(fd, msg, sz)
 	-- recv a package, forward it
@@ -108,14 +81,7 @@ function handler.message(fd, msg, sz)
 	end
 end
 
-function handler.connect(fd, addr)
-	local c = {
-		fd = fd,
-		ip = addr,
-	}
-	connection[fd] = c
-	skynet.send(watchdog, "lua", "socket", "open", fd, addr)
-end
+
 
 local function unforward(c)
 	if c.agent then
@@ -168,9 +134,54 @@ function CMD.kick(source, fd)
 	gateserver.closeclient(fd)
 end
 
+
+-- login server调用
+local internal_id = 0
+function CMD.login(uid, secret)
+	print("ffffffffffffffffffffffff")
+	-- you should return unique subid
+	internal_id = internal_id+1
+    local id = internal_id    
+	
+	local username = server.username(uid, id, servername)   
+    local agent = skynet.newservice "player"
+	local u = {
+		username = username,
+		agent = agent,
+		uid = uid,
+		subid = id,
+	}
+
+    skynet.call(agent, "lua", "login", uid, id, secret)
+	users[uid] = u
+	username_map[username] = u
+	
+	--gateserver.login(username, secret)
+	print("ffffffffffffffffffffffff")
+	return id
+end
+
 function handler.command(cmd, source, ...)
 	local f = assert(CMD[cmd])
 	return f(source, ...)
+end
+
+--注册服务器到login
+function handler.open(source, conf)
+	--watchdog = conf.watchdog or source
+	print("regist server"..conf.servername)
+	local servername = assert(conf.servername)
+	return server.register_handler(servername)
+end
+
+--玩家连接上来
+function handler.connect(fd, addr)
+	local c = {
+		fd = fd,
+		ip = addr,
+	}
+	connection[fd] = c
+	--skynet.send(watchdog, "lua", "socket", "open", fd, addr)
 end
 
 gateserver.start(handler)

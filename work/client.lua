@@ -131,8 +131,9 @@ end
 local text = "echo"
 local index = 1
 
-print("connect")
+print("connect being")
 fd = assert(socket.connect("127.0.0.1", 9000))
+
 last = ""
 
 local handshake = string.format("%s@%s#%s:%d", crypt.base64encode(token.user), crypt.base64encode(token.server),crypt.base64encode(subid) , index)

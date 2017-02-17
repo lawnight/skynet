@@ -31,6 +31,9 @@ end
 function server.login_handler(server, uid, secret)	
 	local gameserver = server_list[server]
 	--让游戏服务器准备，返回subid给客服端，secret。
+	if gameserver==nil then
+		print("not found this gameserver:",server)
+	end
 	print("secret:",secret)
 	local subid = tostring(skynet.call(gameserver, "lua", "login", uid, secret))
 	--user_online[uid] = { address = gameserver, subid = subid , server = server}	

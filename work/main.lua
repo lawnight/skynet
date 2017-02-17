@@ -22,6 +22,7 @@ skynet.start(function()
 		port = 9000,
 		maxclient = max_client,
 		nodelay = true,
+		servername = "sample"
 	})
 
 	

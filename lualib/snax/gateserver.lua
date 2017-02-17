@@ -149,6 +149,7 @@ function gateserver.start(handler)
 			if f then
 				skynet.ret(skynet.pack(f(address, ...)))
 			else
+				print("fffffffffsfsffsfs")
 				skynet.ret(skynet.pack(handler.command(cmd, address, ...)))
 			end
 		end)
