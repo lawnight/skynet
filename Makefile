@@ -42,6 +42,8 @@ jemalloc : $(MALLOC_STATICLIB)
 update3rd :
 	rm -rf 3rd/jemalloc && git submodule update --init
 
+
+
 # skynet
 
 CSERVICE = snlua logger gate harbor
@@ -58,7 +60,8 @@ SKYNET_SRC = skynet_main.c skynet_handle.c skynet_module.c skynet_mq.c \
 all : \
   $(SKYNET_BUILD_PATH)/skynet \
   $(foreach v, $(CSERVICE), $(CSERVICE_PATH)/$(v).so) \
-  $(foreach v, $(LUA_CLIB), $(LUA_CLIB_PATH)/$(v).so) 
+  $(foreach v, $(LUA_CLIB), $(LUA_CLIB_PATH)/$(v).so) \
+
 
 $(SKYNET_BUILD_PATH)/skynet : $(foreach v, $(SKYNET_SRC), skynet-src/$(v)) $(LUA_LIB) $(MALLOC_STATICLIB)
 	$(CC) $(CFLAGS) -o $@ $^ -Iskynet-src -I$(JEMALLOC_INC) $(LDFLAGS) $(EXPORT) $(SKYNET_LIBS) $(SKYNET_DEFINES)
@@ -129,6 +132,19 @@ $(LUA_CLIB_PATH)/mysqlaux.so : lualib-src/lua-mysqlaux.c | $(LUA_CLIB_PATH)
 
 $(LUA_CLIB_PATH)/debugchannel.so : lualib-src/lua-debugchannel.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@	
+
+
+# myTest
+
+TEST_PATH = work/test
+all	: LUA_TEST
+
+LUA_TEST:$(LUA_LIB)  $(TEST_PATH)/luatest.c
+	$(CC) $(CFLAGS) -o $(TEST_PATH)/test  $^ $(LUA_LIB) $(LDFLAGS) $(SKYNET_LIBS)
+	
+
+#$(TEST_PATH)/luatest.o:$(TEST_PATH)/luatest.c 
+	
 
 clean :
 	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/*.so $(LUA_CLIB_PATH)/*.so
