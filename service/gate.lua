@@ -18,6 +18,7 @@ function handler.open(source, conf)
 end
 
 function handler.message(fd, msg, sz)
+	print("gate msggggggggggggggggggggggggggggggggggg")
 	-- recv a package, forward it
 	local c = connection[fd]
 	local agent = c.agent

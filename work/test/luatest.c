@@ -19,16 +19,12 @@ traceback(lua_State *L)
 static int
 callc(lua_State *L)
 {
-
     int *a = malloc(sizeof(int));
     printf("i'm c %d\n", *(a + 1));
     lua_getglobal(L, "c");
-
     lua_call(L, 0, 0);
     //int r = lua_call(L, 0, 0);
-
     luaL_error(L, "Listen error");
-
     return 1;
 }
 
@@ -97,7 +93,6 @@ int main()
     {
         printf("lua error is 0000%s0000\n", lua_tostring(L, -1));
     }
-
     printf("all done\n");
     //getchar();
     return 0;

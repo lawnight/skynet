@@ -52,7 +52,7 @@ function gateserver.start(handler)
 
 	local MSG = {}
 
-	local function dispatch_msg(fd, msg, sz)
+	local function dispatch_msg(fd, msg, sz)	
 		if connection[fd] then
 			handler.message(fd, msg, sz)
 		else
@@ -132,11 +132,12 @@ function gateserver.start(handler)
 		name = "socket",
 		id = skynet.PTYPE_SOCKET,	-- PTYPE_SOCKET = 6
 		unpack = function ( msg, sz )
+			--print("unpack!!!!!",msg)
 			return netpack.filter( queue, msg, sz)
 		end,
 		dispatch = function (_, _, q, type, ...)
 			queue = q
-			print("socket message:",q,type,...)
+			--print("socket message:",q,type,...)
 			if type then
 				MSG[type](...)
 			end
@@ -148,8 +149,7 @@ function gateserver.start(handler)
 			local f = CMD[cmd]
 			if f then
 				skynet.ret(skynet.pack(f(address, ...)))
-			else
-				print("fffffffffsfsffsfs")
+			else				
 				skynet.ret(skynet.pack(handler.command(cmd, address, ...)))
 			end
 		end)
